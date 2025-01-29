@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI SDK</title>
+</head>
+<style type="text/css">
+  body {
+    font-family: Arial, sans-serif;
+    max-width: 60ch;
+  }
+  form {
+    margin-bottom: 1rem;
+  }
+  label {
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  input {
+    width: 100%;
+    padding: 0.5rem;
+    font-size: 1rem;
+  }
+  button {
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+  }
+  button:hover {
+    background-color: #0056b3;
+  }
+  #answer:not(:empty) {
+    margin-top: 1rem;
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    white-space: pre-wrap;
+  }
+</style>
+<script>
+  async function askQuestion(event) {
+    event.preventDefault();
+    const answerDiv = document.getElementById('answer');
+    answerDiv.textContent = '';
+    const question = document.getElementById('question').value;
+    const response = await fetch('/ask', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ question }),
+    });
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder("utf-8");
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      answerDiv.textContent += decoder.decode(value);
+    }
+    reader.releaseLock();
+    if (response.ok) {
+      console.log('Question asked');
+    } else {
+      console.error('Failed to ask question');
+    }
+  }
+  // document.querySelector('form').addEventListener('submit', askQuestion);
+</script>
+<body>
+  <h1>AI SDK</h1>
+  <form onsubmit="askQuestion(event)">
+    <label for="question">
+      Question:
+      <input type="text" id="question" name="question">
+    </label>
+    <button type="submit">Ask</button>
+  </form>
+  <div id="answer"></div>
+</body>
+</html>
